@@ -19,7 +19,7 @@
    El mapa se construye automáticamente a partir de este arreglo.
 ================================================================= */
 
-const SITE_TITLE = "Multicomputo / Multitech";
+const SITE_TITLE = "Multicomputo - Multitech";
 const LAST_UPDATED = "17 ago 2026, 7:35 p.m.";
 
 /* ----------------------------------------------------------------
