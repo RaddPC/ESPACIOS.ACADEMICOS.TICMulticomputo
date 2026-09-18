@@ -19,8 +19,8 @@
    El mapa se construye automáticamente a partir de este arreglo.
 ================================================================= */
 
-const SITE_TITLE = "Universidad de Santander — Lagos Cacique";
-const LAST_UPDATED = "06 ago 2026, 7:35 p.m.";
+const SITE_TITLE = "Multicomputo / Multitech";
+const LAST_UPDATED = "17 ago 2026, 7:35 p.m.";
 
 /* ----------------------------------------------------------------
    Pisos en custodia por edificio (informativo, se muestra en el
