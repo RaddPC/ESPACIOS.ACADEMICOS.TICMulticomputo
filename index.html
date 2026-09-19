@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Registro de espacios — Multicomputo/Multitech</title>
-<meta name="description" content="Mapa interactivo de estado de aulas: abiertas y cerradas, por edificio y piso.">
+<meta name="description" content="Mapa interactivo de estado de salones: abiertos, cerrados y clases canceladas, por sede y piso.">
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -27,9 +27,10 @@
   </header>
 
   <section class="stats" id="statsBar">
-    <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Aulas totales</div></div>
-    <div class="stat open"><div class="n" id="statOpen">0</div><div class="l">Abiertas</div></div>
-    <div class="stat closed"><div class="n" id="statClosed">0</div><div class="l">Cerradas</div></div>
+    <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Salones totales</div></div>
+    <div class="stat open"><div class="n" id="statOpen">0</div><div class="l">Abiertos</div></div>
+    <div class="stat closed"><div class="n" id="statClosed">0</div><div class="l">Cerrados</div></div>
+    <div class="stat cancelled"><div class="n" id="statCancelled">0</div><div class="l">Clases canceladas</div></div>
     <div class="stat"><div class="n" id="statPct">0%</div><div class="l">Ocupación</div></div>
   </section>
 
@@ -40,28 +41,30 @@
 
   <div class="controls">
     <div>
-      <label for="fBuilding">Edificio</label>
-      <select id="fBuilding"><option value="">Todos</option></select>
+      <label for="fSede">Sede</label>
+      <select id="fSede"><option value="">Todas</option></select>
     </div>
     <div>
       <label for="fFloor">Piso</label>
       <select id="fFloor"><option value="">Todos</option></select>
     </div>
     <div>
-      <label for="fSearch">Buscar aula</label>
+      <label for="fSearch">Buscar salón</label>
       <input type="text" id="fSearch" placeholder="Código o nombre…">
     </div>
     <div class="status-toggle" role="group" aria-label="Filtrar por estado">
-      <button data-status="" class="active">Todas</button>
-      <button data-status="abierta">Abiertas</button>
-      <button data-status="cerrada">Cerradas</button>
+      <button data-status="" class="active">Todos</button>
+      <button data-status="abierta">Abiertos</button>
+      <button data-status="cerrada">Cerrados</button>
+      <button data-status="cancelada">Cancelados</button>
     </div>
   </div>
 
   <div class="legend">
-    <span class="item"><span class="dot open"></span> Aula abierta / encendida</span>
-    <span class="item"><span class="dot closed"></span> Aula cerrada / apagada</span>
-    <span class="item">Clic en una aula para ver el detalle y cambiar su estado</span>
+    <span class="item"><span class="dot open"></span> Salón abierto / con clase</span>
+    <span class="item"><span class="dot closed"></span> Salón cerrado / apagado</span>
+    <span class="item"><span class="dot cancelled"></span> Clase cancelada</span>
+    <span class="item">Clic en un salón para ver el detalle y cambiar su estado</span>
   </div>
 
   <main id="map"></main>
@@ -102,19 +105,51 @@
   <span class="badge" id="pBadge">—</span>
 
   <dl>
-    <div><dt>Edificio</dt><dd id="pBuilding">—</dd></div>
+    <div><dt>Sede</dt><dd id="pSede">—</dd></div>
     <div><dt>Piso</dt><dd id="pFloor">—</dd></div>
     <div><dt>Tipo</dt><dd id="pType">—</dd></div>
     <div><dt>Capacidad</dt><dd id="pCapacity">—</dd></div>
   </dl>
 
   <div id="pScheduleWrap">
-    <div class="schedule-title">Horario asignado</div>
+    <div class="schedule-title">Horario asignado (cronograma)</div>
     <div id="pSchedule"></div>
   </div>
 
-  <button class="toggle-btn" id="pToggle"></button>
-  <p class="note">Este botón cambia el estado solo en tu navegador (localStorage). Para que el cambio sea visible para todos, edita el campo <code>estado</code> del aula en el código y vuelve a publicar el sitio.</p>
+  <div id="pDetalleActualWrap">
+    <div class="schedule-title">Estado actual registrado</div>
+    <div id="pDetalleActual"></div>
+  </div>
+
+  <div class="state-form">
+    <div class="schedule-title">Actualizar estado</div>
+
+    <div class="state-options" id="stateOptions">
+      <button type="button" class="state-opt" data-estado="abierta">🟢 Abierta</button>
+      <button type="button" class="state-opt" data-estado="cerrada">🔴 Cerrada</button>
+      <button type="button" class="state-opt" data-estado="cancelada">🟠 Cancelada</button>
+    </div>
+
+    <div class="state-fields" id="fieldsAbierta">
+      <label for="inDocente">Docente</label>
+      <input type="text" id="inDocente" placeholder="Nombre del docente">
+      <label for="inHorarioClase">Horario</label>
+      <input type="text" id="inHorarioClase" placeholder="Ej: 07:00 - 09:00">
+      <label for="inPrograma">Programa / especialidad</label>
+      <input type="text" id="inPrograma" placeholder="Ej: Ingeniería de Sistemas">
+    </div>
+
+    <div class="state-fields" id="fieldsNota">
+      <label id="notaLabel" for="inNota">Nota / novedad</label>
+      <textarea id="inNota" rows="2" placeholder="Describe la novedad…"></textarea>
+    </div>
+
+    <p class="modal-note error" id="stateError"></p>
+
+    <button class="toggle-btn" id="pGuardar">Guardar estado</button>
+  </div>
+
+  <p class="note">Este cambio se guarda solo en tu navegador (localStorage). Para que sea visible para todos, publica el sitio de nuevo o usa el mismo navegador/computador que administra la página.</p>
 </aside>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
