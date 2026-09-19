@@ -82,7 +82,7 @@ const DATA = [].concat(
 const REPORTE_CONFIG = {
   correoJefe: "coordinador.academico@multicomputo.com.co",           // destinatario del correo
   telefonoWhatsapp: "573175140336",        // con código de país, sin "+", sin espacios
-  nombreResponsable: ""           // aparece al final del reporte
+             // aparece al final del reporte
 };
 
 /* Texto fijo de agradecimiento al creador del código — SOLO aparece en el
