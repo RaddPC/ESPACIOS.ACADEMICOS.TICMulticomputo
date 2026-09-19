@@ -23,7 +23,7 @@
 ================================================================= */
 
 const SITE_TITLE = "Multicomputo - Multitech";
-const LAST_UPDATED = "17 sep 2026";
+const LAST_UPDATED = "19 sep 2026";
 
 /* ----------------------------------------------------------------
    Generador de salones numerados consecutivos.
@@ -80,9 +80,9 @@ const DATA = [].concat(
    CONFIGURACIÓN DEL REPORTE — edita esto con los datos reales
 ---------------------------------------------------------------- */
 const REPORTE_CONFIG = {
-  correoJefe: "logistica@udes.edu.co",           // destinatario del correo
-  telefonoWhatsapp: "573156422898",        // con código de país, sin "+", sin espacios
-  nombreResponsable: "Juan Tobon - Julian Torres"           // aparece al final del reporte
+  correoJefe: "coordinador.academico@multicomputo.com.co",           // destinatario del correo
+  telefonoWhatsapp: "573175140336",        // con código de país, sin "+", sin espacios
+  nombreResponsable: "lider de infraestructura TIC - Juan G. Tobon"           // aparece al final del reporte
 };
 
 const STORAGE_KEY = "aulas_estado_v2";
