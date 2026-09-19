@@ -88,7 +88,7 @@ const REPORTE_CONFIG = {
 /* Texto fijo de agradecimiento al creador del código — SOLO aparece en el
    pie del PDF, no se usa para nada más, así que puedes cambiar el texto
    con total libertad (siempre entre comillas) sin que nada se rompa. */
-const CREDITO_CODIGO = "Código y diseño: Juan G. Tobon";
+const CREDITO_CODIGO = "Código y diseño: Lider de infraestructura TIC - Juan Gonzalo C.Tobon";
 
 const STORAGE_KEY = "aulas_estado_v2";
 
