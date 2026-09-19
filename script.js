@@ -23,7 +23,7 @@
 ================================================================= */
 
 const SITE_TITLE = "Multicomputo - Multitech";
-const LAST_UPDATED = "19 sep 2026";
+const LAST_UPDATED = "17 sep 2026";
 
 /* ----------------------------------------------------------------
    Generador de salones numerados consecutivos.
@@ -80,15 +80,15 @@ const DATA = [].concat(
    CONFIGURACIÓN DEL REPORTE — edita esto con los datos reales
 ---------------------------------------------------------------- */
 const REPORTE_CONFIG = {
-  correoJefe: "coordinador.academico@multicomputo.com.co",           // destinatario del correo
-  telefonoWhatsapp: "573175140336",        // con código de país, sin "+", sin espacios
-             // aparece al final del reporte
+  correoJefe: "logistica@udes.edu.co",           // destinatario del correo
+  telefonoWhatsapp: "573156422898",        // con código de país, sin "+", sin espacios
+  nombreResponsable: "Juan Tobon - Julian Torres"           // aparece al final del reporte
 };
 
 /* Texto fijo de agradecimiento al creador del código — SOLO aparece en el
    pie del PDF, no se usa para nada más, así que puedes cambiar el texto
    con total libertad (siempre entre comillas) sin que nada se rompa. */
-const CREDITO_CODIGO = "Código y diseño: Juan Gonzalo C.Tobon";
+const CREDITO_CODIGO = "Código y diseño: Juan G. Tobon";
 
 const STORAGE_KEY = "aulas_estado_v2";
 
@@ -512,7 +512,6 @@ function construirTextoReporte(){
 
   out += "\n----------------------------------------\n";
   out += "Reporte generado automáticamente desde el mapa de salones.\n";
-  out += "Responsable: " + REPORTE_CONFIG.nombreResponsable + "\n";
 
   return out;
 }
@@ -763,11 +762,8 @@ function generarPDF(){
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...C_DIM);
-    doc.text("Responsable: " + REPORTE_CONFIG.nombreResponsable, marginX, pageHeight - 20);
+    doc.text(CREDITO_CODIGO, marginX, pageHeight - 20);
     doc.text(`Página ${p} de ${totalPaginas}`, pageWidth - marginX, pageHeight - 20, { align: "right" });
-    doc.setFontSize(7.5);
-    doc.setTextColor(160, 175, 182);
-    doc.text(CREDITO_CODIGO, marginX, pageHeight - 9);
   }
 
   return doc;
