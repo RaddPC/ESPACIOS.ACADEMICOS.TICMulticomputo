@@ -577,26 +577,60 @@ function generarPDF(){
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const marginX = 44;
-  const pageHeight = doc.internal.pageSize.getHeight();
   const pageWidth = doc.internal.pageSize.getWidth();
-  const maxWidth = pageWidth - marginX * 2;
-  let y = 54;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 44;
+  const contentWidth = pageWidth - marginX * 2;
 
+  // Paleta impresa (basada en los colores del sitio)
+  const C_DEEP   = [10, 31, 48];     // fondo del encabezado
+  const C_INK    = [20, 35, 48];     // texto principal
+  const C_ACCENT = [42, 124, 138];   // acento (barras de sección)
+  const C_PAPER  = [234, 242, 244];  // texto claro sobre el encabezado
+  const C_DIM    = [120, 138, 148];  // texto secundario
+  const C_LINE   = [214, 223, 227];  // líneas / bordes finos
+  const C_CARDBG = [247, 249, 250];
+  const C_OPEN   = [64, 130, 96];
+  const C_CLOSED = [176, 73, 63];
+  const C_AMBER  = [175, 128, 30];
+
+  let y = 0;
+
+  function nuevaPagina(){
+    doc.addPage();
+    y = 46;
+  }
   function salto(alto){
-    if (y + alto > pageHeight - 40){
-      doc.addPage();
-      y = 54;
-    }
+    if (y + alto > pageHeight - 56) nuevaPagina();
   }
   function linea(texto, opts={}){
-    const { size=10, style="normal", color=[20,20,20], alto=14 } = opts;
+    const { size=10, style="normal", color=C_INK, alto=14, x=marginX, font="helvetica" } = opts;
     salto(alto);
-    doc.setFont("helvetica", style);
+    doc.setFont(font, style);
     doc.setFontSize(size);
     doc.setTextColor(...color);
-    doc.text(texto, marginX, y);
+    doc.text(texto, x, y);
     y += alto;
+  }
+  function tituloSeccion(texto){
+    salto(28);
+    doc.setFillColor(...C_ACCENT);
+    doc.rect(marginX, y - 10, 3, 13, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.setTextColor(...C_INK);
+    doc.text(texto.toUpperCase(), marginX + 10, y);
+    y += 14;
+  }
+  function punto(texto, color, opts={}){
+    salto(13);
+    doc.setFillColor(...color);
+    doc.circle(marginX + 2.5, y - 3.2, 2, "F");
+    const wrapped = doc.splitTextToSize(texto, contentWidth - 14);
+    wrapped.forEach((w, i) => {
+      if (i > 0) salto(12);
+      linea(w, { size: 9.5, alto: 12, x: marginX + 12, color: opts.color || C_INK });
+    });
   }
 
   const rooms = getRooms();
@@ -605,78 +639,128 @@ function generarPDF(){
   const canceladas = rooms.filter(r => r.estado === "cancelada").length;
   const cerradas = total - abiertas - canceladas;
 
-  linea("Reporte de espacios academicos", { size: 17, style: "bold", alto: 22 });
-  linea(SITE_TITLE, { size: 10, color: [90,90,90], alto: 14 });
-  linea("Generado: " + fechaHoraActual(), { size: 10, color: [90,90,90], alto: 20 });
+  /* ---- Encabezado con banda de color ---- */
+  const headerH = 90;
+  doc.setFillColor(...C_DEEP);
+  doc.rect(0, 0, pageWidth, headerH, "F");
+  doc.setFillColor(127, 216, 224);
+  doc.rect(0, headerH - 3, pageWidth, 3, "F");
 
-  linea("Resumen general", { size: 12, style: "bold", alto: 16 });
-  linea(`Total: ${total}    Abiertos: ${abiertas}    Cerrados: ${cerradas}    Cancelados: ${canceladas}`, { size: 10, alto: 20 });
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(...C_PAPER);
+  doc.text("Reporte de espacios académicos", marginX, 40);
 
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
+  doc.setTextColor(190, 210, 215);
+  doc.text(SITE_TITLE, marginX, 58);
+
+  doc.setFontSize(9);
+  doc.setTextColor(150, 185, 190);
+  doc.text("Generado: " + fechaHoraActual(), marginX, 74);
+
+  y = headerH + 28;
+
+  /* ---- Resumen general como tarjetas ---- */
+  const cards = [
+    { label: "TOTAL",      value: total,      color: C_INK   },
+    { label: "ABIERTOS",   value: abiertas,   color: C_OPEN  },
+    { label: "CERRADOS",   value: cerradas,   color: C_CLOSED},
+    { label: "CANCELADOS", value: canceladas, color: C_AMBER }
+  ];
+  const gap = 10;
+  const cardW = (contentWidth - gap * 3) / 4;
+  const cardH = 50;
+  cards.forEach((c, i) => {
+    const cx = marginX + i * (cardW + gap);
+    doc.setFillColor(...C_CARDBG);
+    doc.setDrawColor(...C_LINE);
+    doc.roundedRect(cx, y, cardW, cardH, 3, 3, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(19);
+    doc.setTextColor(...c.color);
+    doc.text(String(c.value), cx + 12, y + 27);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...C_DIM);
+    doc.text(c.label, cx + 12, y + 40);
+  });
+  y += cardH + 26;
+
+  /* ---- Inventario por sede / piso ---- */
+  tituloSeccion("Inventario por sede");
   const sedeOrder = uniqueInOrder(DATA.map(r => r.sede));
-
   sedeOrder.forEach(sName => {
     const roomsInSede = rooms.filter(r => r.sede === sName);
     if (!roomsInSede.length) return;
 
-    salto(20);
-    linea("Sede: " + sName, { size: 11.5, style: "bold", alto: 15 });
+    salto(16);
+    linea(sName, { size: 10.5, style: "bold", alto: 15 });
 
     const floorOrder = uniqueInOrder(DATA.filter(r => r.sede === sName).map(r => r.piso));
     floorOrder.forEach(fName => {
       const roomsInFloor = roomsInSede.filter(r => r.piso === fName);
       if (!roomsInFloor.length) return;
       const fAbiertas = roomsInFloor.filter(r => r.estado === "abierta").length;
-      linea(`   ${fName}: ${roomsInFloor.length} espacios — ${fAbiertas} abiertos / ${roomsInFloor.length - fAbiertas} no disponibles`, { size: 9.5, alto: 13 });
+      linea(`${fName}: ${roomsInFloor.length} espacios · ${fAbiertas} abiertos / ${roomsInFloor.length - fAbiertas} no disponibles`,
+        { size: 9, color: C_DIM, alto: 13, x: marginX + 12 });
     });
-    y += 6;
+    y += 4;
   });
 
+  /* ---- Aulas en uso ---- */
   const enUso = rooms.filter(r => r.estado === "abierta" && r.docente);
-  salto(20);
-  linea(`Aulas en uso (${enUso.length})`, { size: 12, style: "bold", alto: 16 });
+  tituloSeccion(`Aulas en uso (${enUso.length})`);
   if (!enUso.length){
-    linea("  Ninguna.", { size: 9.5, alto: 13 });
+    linea("Ninguna.", { size: 9.5, color: C_DIM, alto: 13 });
   } else {
     enUso.forEach(r => {
-      const texto = `  ${r.id} (${r.sede}, ${r.piso}): ${r.docente}`
-        + (r.programa ? ` — ${r.programa}` : "")
-        + (r.horarioClase ? ` — ${r.horarioClase}` : "");
-      const wrapped = doc.splitTextToSize(texto, maxWidth - 10);
-      wrapped.forEach(w => linea(w, { size: 9.5, alto: 12 }));
+      const texto = `${r.id}  (${r.sede}, ${r.piso}) — ${r.docente}`
+        + (r.programa ? `  ·  ${r.programa}` : "")
+        + (r.horarioClase ? `  ·  ${r.horarioClase}` : "");
+      punto(texto, C_OPEN);
     });
   }
-  y += 8;
+  y += 6;
 
+  /* ---- Clases canceladas ---- */
   const canceladasList = rooms.filter(r => r.estado === "cancelada");
-  salto(20);
-  linea(`Clases canceladas (${canceladasList.length})`, { size: 12, style: "bold", alto: 16 });
+  tituloSeccion(`Clases canceladas (${canceladasList.length})`);
   if (!canceladasList.length){
-    linea("  Ninguna.", { size: 9.5, alto: 13 });
+    linea("Ninguna.", { size: 9.5, color: C_DIM, alto: 13 });
   } else {
     canceladasList.forEach(r => {
-      const texto = `  ${r.id} (${r.sede}, ${r.piso})` + (r.nota ? `: ${r.nota}` : "");
-      const wrapped = doc.splitTextToSize(texto, maxWidth - 10);
-      wrapped.forEach(w => linea(w, { size: 9.5, color: [150,110,40], alto: 12 }));
+      const texto = `${r.id}  (${r.sede}, ${r.piso})` + (r.nota ? ` — ${r.nota}` : "");
+      punto(texto, C_AMBER, { color: C_AMBER });
     });
   }
-  y += 8;
+  y += 6;
 
+  /* ---- Cerradas con novedad ---- */
   const conNovedad = rooms.filter(r => r.estado === "cerrada" && r.nota);
-  salto(20);
-  linea(`Cerradas con novedad (${conNovedad.length})`, { size: 12, style: "bold", alto: 16 });
+  tituloSeccion(`Cerradas con novedad (${conNovedad.length})`);
   if (!conNovedad.length){
-    linea("  Ninguna.", { size: 9.5, alto: 13 });
+    linea("Ninguna.", { size: 9.5, color: C_DIM, alto: 13 });
   } else {
     conNovedad.forEach(r => {
-      const texto = `  ${r.id} (${r.sede}, ${r.piso}): ${r.nota}`;
-      const wrapped = doc.splitTextToSize(texto, maxWidth - 10);
-      wrapped.forEach(w => linea(w, { size: 9.5, color: [150,60,55], alto: 12 }));
+      const texto = `${r.id}  (${r.sede}, ${r.piso}) — ${r.nota}`;
+      punto(texto, C_CLOSED, { color: C_CLOSED });
     });
   }
 
-  y += 10;
-  salto(20);
-  linea("Responsable: " + REPORTE_CONFIG.nombreResponsable, { size: 9, color: [110,110,110], alto: 13 });
+  /* ---- Pie de página en todas las páginas ---- */
+  const totalPaginas = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= totalPaginas; p++){
+    doc.setPage(p);
+    doc.setDrawColor(...C_LINE);
+    doc.line(marginX, pageHeight - 34, pageWidth - marginX, pageHeight - 34);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...C_DIM);
+    doc.text("Responsable: " + REPORTE_CONFIG.nombreResponsable, marginX, pageHeight - 20);
+    doc.text(`Página ${p} de ${totalPaginas}`, pageWidth - marginX, pageHeight - 20, { align: "right" });
+  }
 
   return doc;
 }
