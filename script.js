@@ -82,7 +82,7 @@ const DATA = [].concat(
 const REPORTE_CONFIG = {
   correoJefe: "coordinador.academico@multicomputo.com.co",           // destinatario del correo
   telefonoWhatsapp: "573175140336",        // con código de país, sin "+", sin espacios
-  nombreResponsable: "lider de infraestructura TIC - Juan G. Tobon"           // aparece al final del reporte
+  agradecimientos: "lider de infraestructura TIC - Juan G. Tobon"           // aparece al final del reporte
 };
 
 const STORAGE_KEY = "aulas_estado_v2";
